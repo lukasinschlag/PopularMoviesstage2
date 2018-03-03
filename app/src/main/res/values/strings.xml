@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">PopularMovies</string>
+    <string name="movie_img_content_description">Movie image</string>
+    <string name="action_sort_most_popular">Most popular</string>
+    <string name="action_sort_highest_rated">Highest rated</string>
+    <string name="movie_rating">%.1f/10</string>
+    <string name="movie_synopsis">Synopsis</string>
+    <string name="movie_err">Oops, there has been a problem while loading details for this movie.</string>
+    <string name="movie_err_inet">Oops, movies could not be loaded. There seems to be no internet connection.</string>
+</resources>
