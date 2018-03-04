@@ -1,17 +1,23 @@
 package com.inschlag.popularmovies_stage2;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.inschlag.popularmovies_stage2.data.Constants;
-import com.inschlag.popularmovies_stage2.data.Movie;
+import com.inschlag.popularmovies_stage2.data.model.Movie;
+import com.inschlag.popularmovies_stage2.data.model.Trailer;
 import com.squareup.picasso.Picasso;
 
-public class MovieDetailActivity extends AppCompatActivity {
+public class MovieDetailActivity extends AppCompatActivity implements TrailersAdapter.OnTrailerClickListener{
 
     private Movie mMovie;
 
@@ -42,6 +48,8 @@ public class MovieDetailActivity extends AppCompatActivity {
             return;
         }
 
+        Log.d("MDA", "trailers " + mMovie.getTrailers().size());
+
         TextView title = findViewById(R.id.movie_title),
                 releaseDate = findViewById(R.id.movie_release_date),
                 rating = findViewById(R.id.movie_rating),
@@ -57,13 +65,24 @@ public class MovieDetailActivity extends AppCompatActivity {
         Picasso.with(MovieDetailActivity.this).load(mMovie.getImg()).into(img);
         Picasso.with(MovieDetailActivity.this).load(mMovie.getBackdrop()).into(backdrop);
 
-        // TODO startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.youtube.com/watch?v=cxLG2wtE7TM")));
+        RecyclerView rVTrailers = findViewById(R.id.rVTrailers);
+        RecyclerView rVReviews = findViewById(R.id.rVReviews);
 
+        rVTrailers.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        rVReviews.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+
+        rVTrailers.setAdapter(new TrailersAdapter(this, mMovie.getTrailers()));
+        rVReviews.setAdapter(new ReviewsAdapter(mMovie.getReviews()));
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         outState.putParcelable(Constants.MOVIE_KEY, mMovie);
         super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onTrailerClick(Trailer trailer) {
+        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(Constants.REQUEST_YOUTUBE_VIDEO + trailer.getKey())));
     }
 }

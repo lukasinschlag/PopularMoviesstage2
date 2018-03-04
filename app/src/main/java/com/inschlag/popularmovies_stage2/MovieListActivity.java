@@ -1,5 +1,6 @@
 package com.inschlag.popularmovies_stage2;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -20,7 +21,9 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.inschlag.popularmovies_stage2.data.Constants;
-import com.inschlag.popularmovies_stage2.data.Movie;
+import com.inschlag.popularmovies_stage2.data.model.Movie;
+import com.inschlag.popularmovies_stage2.data.model.Review;
+import com.inschlag.popularmovies_stage2.data.model.Trailer;
 import com.inschlag.popularmovies_stage2.utils.JsonUtils;
 
 import java.io.BufferedInputStream;
@@ -150,6 +153,7 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
 
     @Override
     public void onMovieClick(Movie movie) {
+        Log.d("MLA", "movie clicked: " + movie.toString());
         final Bundle movieDetailArgs = new Bundle();
         movieDetailArgs.putParcelable(Constants.MOVIE_KEY, movie);
 
@@ -165,9 +169,11 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
     static class LoadMovies extends AsyncTask<Void, Void, ArrayList<Movie>> {
 
         private String mUrl;
+        private String apiKey;
         private WeakReference<MovieListActivity> activityReference;
 
         LoadMovies(MovieListActivity context, int rating, String apiKey){
+            this.apiKey = apiKey;
             activityReference = new WeakReference<>(context);
             switch (rating){
                 case Constants.MOVIES_MOST_POPULAR:
@@ -217,9 +223,10 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
                 }
 
                 if(movies != null) {
-                    // Load the reviews &
+                    // Load the trailers & reviews
                     for (Movie m : movies) {
-
+                        m.setTrailers(getTrailers(m.getId()));
+                        m.setReviews(getReviews(m.getId()));
                     }
                 }
             } catch (MalformedURLException e) {
@@ -239,6 +246,35 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
                 }
             }
             return movies;
+        }
+        
+        private ArrayList<Trailer> getTrailers(int id) throws IOException {
+            ArrayList<Trailer> trailers = null;
+            InputStream in = null;
+            @SuppressLint("DefaultLocale") 
+            URL trailerUrl = new URL(String.format(Constants.REQUEST_TRAILERS, id, apiKey));
+            HttpURLConnection urlConnection = (HttpURLConnection) trailerUrl.openConnection();
+
+            in = new BufferedInputStream(urlConnection.getInputStream());
+            Scanner scanner = new Scanner(in).useDelimiter("\\A");
+            if(scanner.hasNext()) {
+                trailers = JsonUtils.parseTrailerJson(scanner.next());
+            }
+            return trailers;
+        }
+
+        private ArrayList<Review> getReviews(int id) throws IOException {
+            ArrayList<Review> reviews = null;
+            InputStream in = null;
+            @SuppressLint("DefaultLocale")
+            URL reviewUrl = new URL(String.format(Constants.REQUEST_REVIEWS, id, apiKey));
+            HttpURLConnection urlConnection = (HttpURLConnection) reviewUrl.openConnection();
+            in = new BufferedInputStream(urlConnection.getInputStream());
+            Scanner scanner = new Scanner(in).useDelimiter("\\A");
+            if(scanner.hasNext()) {
+                reviews = JsonUtils.parseReviewJson(scanner.next());
+            }
+            return reviews;
         }
 
         @Override

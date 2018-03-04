@@ -3,9 +3,9 @@ package com.inschlag.popularmovies_stage2.utils;
 import android.util.Log;
 
 import com.inschlag.popularmovies_stage2.data.Constants;
-import com.inschlag.popularmovies_stage2.data.Movie;
-import com.inschlag.popularmovies_stage2.data.Review;
-import com.inschlag.popularmovies_stage2.data.Trailer;
+import com.inschlag.popularmovies_stage2.data.model.Movie;
+import com.inschlag.popularmovies_stage2.data.model.Review;
+import com.inschlag.popularmovies_stage2.data.model.Trailer;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -54,7 +54,6 @@ public class JsonUtils {
     }
 
     public static ArrayList<Review> parseReviewJson(String json) {
-
         ArrayList<Review> reviews = new ArrayList<>();
 
         try {
@@ -67,7 +66,7 @@ public class JsonUtils {
                     JSONObject mObj = arr.getJSONObject(i);
 
                     reviews.add(new Review(
-                            mObj.getInt(Constants.FIELD_ID),
+                            mObj.getString(Constants.FIELD_ID),
                             mObj.getString(Constants.FIELD_AUTHOR),
                             mObj.getString(Constants.FIELD_CONTENT)
                     ));
@@ -77,17 +76,15 @@ public class JsonUtils {
             // Err while parsing
             Log.d(JsonUtils.class.getCanonicalName(), e.getMessage());
         }
-
         return reviews;
     }
 
     public static ArrayList<Trailer> parseTrailerJson(String json) {
-
         ArrayList<Trailer> trailers = new ArrayList<>();
 
         try {
             JSONObject jObject = new JSONObject(json);
-            JSONArray arr = jObject.optJSONArray(Constants.FIELD_RESULTS);
+            JSONArray arr = jObject.optJSONArray(Constants.FIELD_YOUTUBE);
 
             if (arr != null) {
                 //Go through the review results
@@ -95,8 +92,8 @@ public class JsonUtils {
                     JSONObject mObj = arr.getJSONObject(i);
 
                     trailers.add(new Trailer(
-                            mObj.getInt(Constants.FIELD_ID),
-                            mObj.getString(Constants.FIELD_KEY)
+                            mObj.getString(Constants.FIELD_SOURCE),
+                            mObj.getString(Constants.FIELD_NAME)
                     ));
                 }
             }

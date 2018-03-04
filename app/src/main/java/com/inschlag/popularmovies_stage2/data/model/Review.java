@@ -1,27 +1,27 @@
-package com.inschlag.popularmovies_stage2.data;
+package com.inschlag.popularmovies_stage2.data.model;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
 public class Review implements Parcelable {
 
-    private int id = 0;
+    private String id;
     private String author;
     private String content;
 
-    public Review(int id, String author, String content) {
+    public Review(String id, String author, String content) {
         this.id = id;
         this.author = author;
         this.content = content;
     }
 
     private Review(Parcel source) {
-        this.id = source.readInt();
+        this.id = source.readString();
         this.author = source.readString();
         this.content = source.readString();
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
@@ -33,7 +33,7 @@ public class Review implements Parcelable {
         return content;
     }
 
-    public static final Parcelable.Creator CREATOR = new Parcelable.Creator(){
+    public static final Parcelable.Creator<Review> CREATOR = new Parcelable.Creator<Review>(){
         @Override
         public Review createFromParcel(Parcel source) {
             return new Review(source);
@@ -52,7 +52,7 @@ public class Review implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeInt(this.id);
+        dest.writeString(this.id);
         dest.writeString(this.author);
         dest.writeString(this.content);
     }

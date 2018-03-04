@@ -7,7 +7,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.inschlag.popularmovies_stage2.data.Movie;
+import com.inschlag.popularmovies_stage2.data.model.Movie;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;

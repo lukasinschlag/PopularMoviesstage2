@@ -1,8 +1,10 @@
-package com.inschlag.popularmovies_stage2.data;
+package com.inschlag.popularmovies_stage2.data.model;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Movie implements Parcelable {
@@ -14,8 +16,8 @@ public class Movie implements Parcelable {
     private String plot;
     private float rating;
     private String date;
-    private List<Review> reviews;
-    private List<Trailer> trailers;
+    private ArrayList<Review> reviews = new ArrayList<>();
+    private ArrayList<Trailer> trailers = new ArrayList<>();
 
     public Movie(int id, String title, String img, String backdrop, String plot, float rating, String date) {
         this.id = id;
@@ -67,19 +69,19 @@ public class Movie implements Parcelable {
         return date;
     }
 
-    public List<Review> getReviews() {
+    public ArrayList<Review> getReviews() {
         return reviews;
     }
 
-    public void setReviews(List<Review> reviews) {
+    public void setReviews(ArrayList<Review> reviews) {
         this.reviews = reviews;
     }
 
-    public List<Trailer> getTrailers() {
+    public ArrayList<Trailer> getTrailers() {
         return trailers;
     }
 
-    public void setTrailers(List<Trailer> trailers) {
+    public void setTrailers(ArrayList<Trailer> trailers) {
         this.trailers = trailers;
     }
 
@@ -93,6 +95,7 @@ public class Movie implements Parcelable {
                 ", plot='" + plot + '\'' +
                 ", rating=" + rating +
                 ", date='" + date + '\'' +
+                ", trailers='" + trailers.size() + '\'' +
                 '}';
     }
 

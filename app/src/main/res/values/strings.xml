@@ -5,6 +5,9 @@
     <string name="action_sort_highest_rated">Highest rated</string>
     <string name="movie_rating">%.1f/10</string>
     <string name="movie_synopsis">Synopsis</string>
+    <string name="movie_reviews">Reviews</string>
     <string name="movie_err">Oops, there has been a problem while loading details for this movie.</string>
     <string name="movie_err_inet">Oops, movies could not be loaded. There seems to be no internet connection.</string>
+    <string name="trailer_img_content_description">Trailer image</string>
+    <string name="trailer_play_content_description">Play trailer</string>
 </resources>

@@ -2,5 +2,8 @@
 <resources>
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="default_padding">8dp</dimen>
+    <dimen name="default_margin">8dp</dimen>
     <dimen name="progress_size">24dp</dimen>
+    <dimen name="default_preview_size">200dp</dimen>
+    <dimen name="default_preview_play">48dp</dimen>
 </resources>
