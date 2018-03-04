@@ -34,6 +34,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
 
@@ -123,12 +124,47 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
         }
     }
 
+    private void loadFavortieMovies() {
+        if(!isOnline()){
+            Toast.makeText(MovieListActivity.this, R.string.movie_err_inet, Toast.LENGTH_LONG).show();
+            return;
+        }
+        // TODO access content provider and get ids
+
+        try {
+            ArrayList<Movie> mMovies = new LoadMovies(MovieListActivity.this, 1, API_KEY).execute().get();
+            if (mMovies != null && mMovies.size() > 0) {
+                mAdapter.setMovies(mMovies);
+            }
+        } catch (InterruptedException e) {
+            Log.d(MovieListActivity.class.getCanonicalName(), "Interrupted LoadMovies: " + e.getMessage());
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            Log.d(MovieListActivity.class.getCanonicalName(), "Error while executing LoadMovies: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu_movielist, menu);
-        menu.findItem(mSelectedFilter == Constants.MOVIES_MOST_POPULAR ?
-                R.id.menu_sort_by_most_popular : R.id.menu_sort_by_highest_rated).setChecked(true);
+
+        int id = 0;
+        switch (mSelectedFilter){
+            case Constants.MOVIES_MOST_POPULAR:
+                id = R.id.menu_sort_by_most_popular;
+                break;
+            case Constants.MOVIES_HIGHEST_RATED:
+                id = R.id.menu_sort_by_highest_rated;
+                break;
+            case Constants.MOVIES_FAVORITES:
+                id = R.id.menu_sort_by_favorites;
+                break;
+            default:
+                id = R.id.menu_sort_by_most_popular;
+        }
+        menu.findItem(id).setChecked(true);
         return true;
     }
 
@@ -142,6 +178,9 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
             case R.id.menu_sort_by_highest_rated:
                 loadMovies((mSelectedFilter = Constants.MOVIES_HIGHEST_RATED));
                 return true;
+            case R.id.menu_sort_by_favorites:
+                //TODO
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -153,7 +192,6 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
 
     @Override
     public void onMovieClick(Movie movie) {
-        Log.d("MLA", "movie clicked: " + movie.toString());
         final Bundle movieDetailArgs = new Bundle();
         movieDetailArgs.putParcelable(Constants.MOVIE_KEY, movie);
 
@@ -171,10 +209,11 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
         private String mUrl;
         private String apiKey;
         private WeakReference<MovieListActivity> activityReference;
+        private List<Integer> ids = null;
 
         LoadMovies(MovieListActivity context, int rating, String apiKey){
             this.apiKey = apiKey;
-            activityReference = new WeakReference<>(context);
+            this.activityReference = new WeakReference<>(context);
             switch (rating){
                 case Constants.MOVIES_MOST_POPULAR:
                     mUrl = Constants.REQUEST_MOST_POPULAR;
@@ -184,6 +223,12 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
                     break;
             }
             mUrl = mUrl.concat(apiKey);
+        }
+
+        LoadMovies(MovieListActivity context, List<Integer> ids, String apiKey){
+            this.apiKey = apiKey;
+            this.activityReference = new WeakReference<>(context);
+            this.ids = ids;
         }
 
         /*
@@ -212,16 +257,19 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
             ArrayList<Movie> movies = null;
             InputStream in = null;
             try {
-                URL url = new URL(mUrl);
-                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                in = new BufferedInputStream(urlConnection.getInputStream());
+                if(ids != null){
+                    movies = loadFavoriteMovies();
+                } else {
+                    URL url = new URL(mUrl);
+                    HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+                    in = new BufferedInputStream(urlConnection.getInputStream());
 
-                Scanner scanner = new Scanner(in).useDelimiter("\\A");
+                    Scanner scanner = new Scanner(in).useDelimiter("\\A");
 
-                if(scanner.hasNext()) {
-                    movies = JsonUtils.parseMovieJson(scanner.next());
+                    if (scanner.hasNext()) {
+                        movies = JsonUtils.parseMoviesJson(scanner.next());
+                    }
                 }
-
                 if(movies != null) {
                     // Load the trailers & reviews
                     for (Movie m : movies) {
@@ -247,7 +295,26 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
             }
             return movies;
         }
-        
+
+        private ArrayList<Movie> loadFavoriteMovies() throws IOException {
+            InputStream in = null;
+            ArrayList<Movie> movies = new ArrayList<>();
+            for(int id : ids){
+                @SuppressLint("DefaultLocale")
+                URL url = new URL(String.format(Constants.REQUEST_MOVIE, apiKey));
+                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+                in = new BufferedInputStream(urlConnection.getInputStream());
+
+                Scanner scanner = new Scanner(in).useDelimiter("\\A");
+
+                if (scanner.hasNext()) {
+                    movies.add(JsonUtils.parseMovieJson(scanner.next()));
+                }
+            }
+
+            return movies;
+        }
+
         private ArrayList<Trailer> getTrailers(int id) throws IOException {
             ArrayList<Trailer> trailers = null;
             InputStream in = null;

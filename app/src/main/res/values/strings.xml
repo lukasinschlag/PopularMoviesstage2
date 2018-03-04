@@ -3,6 +3,8 @@
     <string name="movie_img_content_description">Movie image</string>
     <string name="action_sort_most_popular">Most popular</string>
     <string name="action_sort_highest_rated">Highest rated</string>
+    <string name="action_sort_favorites">Favorites</string>
+    <string name="action_favorite">Mark as favorite</string>
     <string name="movie_rating">%.1f/10</string>
     <string name="movie_synopsis">Synopsis</string>
     <string name="movie_reviews">Reviews</string>

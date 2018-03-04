@@ -41,6 +41,8 @@ public class FavoriteMovieContentProvider extends ContentProvider {
             case Constants.CONTENT_FAVORITES_ID:
                 if(!TextUtils.isEmpty(selection)){
                     selection += " AND ";
+                } else {
+                    selection = "";
                 }
                 selection += FavoriteMovie.COLUMN_ID + " = " + uri.getLastPathSegment();
                 numDeletes = mDbHelper.getWritableDatabase().delete(FavoriteMovie.TABLE_NAME,
@@ -100,6 +102,8 @@ public class FavoriteMovieContentProvider extends ContentProvider {
             case Constants.CONTENT_FAVORITES_ID:
                 if(!TextUtils.isEmpty(selection)){
                     selection += " AND ";
+                } else {
+                    selection = "";
                 }
                 selection += FavoriteMovie.COLUMN_ID + " = " + uri.getLastPathSegment();
                 return mDbHelper.getReadableDatabase().query(FavoriteMovie.TABLE_NAME,

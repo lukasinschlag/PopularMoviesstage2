@@ -15,7 +15,7 @@ import java.util.ArrayList;
 
 public class JsonUtils {
 
-    public static ArrayList<Movie> parseMovieJson(String json) {
+    public static ArrayList<Movie> parseMoviesJson(String json) {
 
         ArrayList<Movie> movies = new ArrayList<>();
 
@@ -30,7 +30,7 @@ public class JsonUtils {
 
                     float rating = 0;
                     String ratingS = mObj.getString(Constants.FIELD_RATING);
-                    if(ratingS != null){
+                    if (ratingS != null) {
                         rating = Float.parseFloat(ratingS);
                     }
 
@@ -42,7 +42,7 @@ public class JsonUtils {
                             mObj.getString(Constants.FIELD_SYNOPSIS),
                             rating,
                             mObj.getString(Constants.FIELD_RELEASED)
-                            ));
+                    ));
                 }
             }
         } catch (JSONException e) {
@@ -51,6 +51,34 @@ public class JsonUtils {
         }
 
         return movies;
+    }
+
+    public static Movie parseMovieJson(String json) {
+
+        try {
+            JSONObject mObj = new JSONObject(json);
+
+            float rating = 0;
+            String ratingS = mObj.getString(Constants.FIELD_RATING);
+            if (ratingS != null) {
+                rating = Float.parseFloat(ratingS);
+            }
+
+            return new Movie(
+                    mObj.getInt(Constants.FIELD_ID),
+                    mObj.getString(Constants.FIELD_TITLE),
+                    Constants.MOVIE_POSTER_URL + mObj.getString(Constants.FIELD_POSTER),
+                    Constants.MOVIE_BACKDROP_URL + mObj.getString(Constants.FIELD_BACKDROP),
+                    mObj.getString(Constants.FIELD_SYNOPSIS),
+                    rating,
+                    mObj.getString(Constants.FIELD_RELEASED)
+            );
+
+        } catch (JSONException e) {
+            // Err while parsing
+            Log.d(JsonUtils.class.getCanonicalName(), e.getMessage());
+        }
+        return null;
     }
 
     public static ArrayList<Review> parseReviewJson(String json) {
