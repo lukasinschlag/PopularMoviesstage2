@@ -7,20 +7,20 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.view.ViewCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.inschlag.popularmovies_stage2.data.Constants;
-import com.inschlag.popularmovies_stage2.data.FavoriteMovieContentProvider;
 import com.inschlag.popularmovies_stage2.data.FavoriteMoviesContract;
 import com.inschlag.popularmovies_stage2.data.model.Movie;
 import com.inschlag.popularmovies_stage2.data.model.Trailer;
@@ -31,6 +31,7 @@ public class MovieDetailActivity extends AppCompatActivity implements TrailersAd
     private Movie mMovie;
     private boolean isFav = false;
     private ContentResolver mCR;
+    private Intent shareTrailer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +68,6 @@ public class MovieDetailActivity extends AppCompatActivity implements TrailersAd
 
         if(cursor != null && cursor.moveToFirst()){
             isFav = true;
-            Log.d("MDA", "isFAV");
             cursor.close();
         }
 
@@ -89,11 +89,25 @@ public class MovieDetailActivity extends AppCompatActivity implements TrailersAd
         RecyclerView rVTrailers = findViewById(R.id.rVTrailers);
         RecyclerView rVReviews = findViewById(R.id.rVReviews);
 
+        ViewCompat.setNestedScrollingEnabled(rVTrailers, false);
+        ViewCompat.setNestedScrollingEnabled(rVReviews, false);
+
         rVTrailers.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
         rVReviews.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
 
         rVTrailers.setAdapter(new TrailersAdapter(this, mMovie.getTrailers()));
         rVReviews.setAdapter(new ReviewsAdapter(mMovie.getReviews()));
+
+        if(mMovie.getReviews().size() == 0){
+            findViewById(R.id.movie_reviews).setVisibility(View.GONE);
+        }
+
+        if(mMovie.getTrailers().size() > 0) {
+            shareTrailer = new Intent(Intent.ACTION_SEND);
+            shareTrailer.setType("text/plain");
+            shareTrailer.putExtra(Intent.EXTRA_SUBJECT, String.format(getResources().getString(R.string.trailer_share_desc), mMovie.getTitle()));
+            shareTrailer.putExtra(Intent.EXTRA_TEXT, Constants.REQUEST_YOUTUBE_VIDEO + mMovie.getTrailers().get(0).getKey());
+        }
     }
 
     @Override
@@ -107,6 +121,10 @@ public class MovieDetailActivity extends AppCompatActivity implements TrailersAd
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu_moviedetail, menu);
 
+        if(shareTrailer == null){
+            menu.findItem(R.id.menu_share).setVisible(false);
+        }
+
         if(isFav){
             menu.findItem(R.id.menu_favorite).setIcon(R.drawable.ic_favorite_24dp);
         }
@@ -118,6 +136,9 @@ public class MovieDetailActivity extends AppCompatActivity implements TrailersAd
         switch (item.getItemId()) {
             case R.id.menu_favorite:
                 item.setIcon(favoriteState() ? R.drawable.ic_favorite_24dp : R.drawable.ic_favorite_no_24dp);
+                return true;
+            case R.id.menu_share:
+                startActivity(Intent.createChooser(shareTrailer, shareTrailer.getStringExtra(Intent.EXTRA_SUBJECT)));
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

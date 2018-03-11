@@ -2,7 +2,6 @@ package com.inschlag.popularmovies_stage2.data.model;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
 
 import com.inschlag.popularmovies_stage2.data.Constants;
 

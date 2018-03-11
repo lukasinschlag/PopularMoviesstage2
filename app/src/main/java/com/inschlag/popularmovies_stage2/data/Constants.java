@@ -12,7 +12,6 @@ public final class Constants {
     public static final String MOVIE_BACKDROP_URL = "http://image.tmdb.org/t/p/w500/";
     public static final String REQUEST_MOST_POPULAR = "http://api.themoviedb.org/3/movie/popular?api_key=";
     public static final String REQUEST_HIGHEST_RATED = "http://api.themoviedb.org/3/movie/top_rated?api_key=";
-    public static final String REQUEST_MOVIE = "http://api.themoviedb.org/3/movie/%d?api_key=%s";
     public static final String REQUEST_REVIEWS = "http://api.themoviedb.org/3/movie/%d/reviews?api_key=%s";
     public static final String REQUEST_TRAILERS = "http://api.themoviedb.org/3/movie/%d/trailers?api_key=%s";
     public static final String REQUEST_YOUTUBE_VIDEO = "https://www.youtube.com/watch?v=";
@@ -28,12 +27,10 @@ public final class Constants {
     public static final String FIELD_RELEASED = "release_date";
     public static final String FIELD_AUTHOR = "author";
     public static final String FIELD_CONTENT = "content";
-    public static final String FIELD_KEY = "key";
     public static final String FIELD_NAME = "name";
     public static final String FIELD_SOURCE = "source";
 
     public static final String CONTENT_AUTHORITY = "com.inschlag.popularmovies";
-    public static final Uri CONTENT_URI_BASE = Uri.parse("content://" +  CONTENT_AUTHORITY);
     public static final String CONTENT_PATH_FAVORITES = "favorites";
     public static final String CONTENT_PATH_FAVORITE_ID = "favorites/#";
     public static final String CONTENT_PATH_FAVORITE_ID_R = "favorites/%d";

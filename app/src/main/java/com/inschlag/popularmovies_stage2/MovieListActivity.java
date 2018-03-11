@@ -1,7 +1,6 @@
 package com.inschlag.popularmovies_stage2;
 
 import android.annotation.SuppressLint;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -14,6 +13,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -23,7 +23,6 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.inschlag.popularmovies_stage2.data.Constants;
-import com.inschlag.popularmovies_stage2.data.FavoriteMoviesContract;
 import com.inschlag.popularmovies_stage2.data.FavoriteMoviesContract.FavoriteMovie;
 import com.inschlag.popularmovies_stage2.data.model.Movie;
 import com.inschlag.popularmovies_stage2.data.model.Review;
@@ -38,9 +37,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
-import java.util.concurrent.ExecutionException;
 
 public class MovieListActivity extends AppCompatActivity implements MoviesAdapter.onMovieClickListener {
 
@@ -51,7 +48,6 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
     private MoviesAdapter mAdapter;
     private int mSelectedFilter = Constants.MOVIES_MOST_POPULAR;
     private SharedPreferences mSharedPrefs;
-    private ContentResolver mCR;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,7 +68,7 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
         recyclerView.setAdapter(mAdapter);
 
         // store the movies to be reused on e.g. orientation change
-        if(savedInstanceState != null && savedInstanceState.containsKey(Constants.MOVIE_KEY)){
+        if (savedInstanceState != null && savedInstanceState.containsKey(Constants.MOVIE_KEY)) {
             mAdapter.setMovies((savedInstanceState.<Movie>getParcelableArrayList(Constants.MOVIE_KEY)));
         } else {
             loadMovies(mSelectedFilter);
@@ -100,9 +96,9 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
     }
 
     /*
-                 * per Implementation Guide, regarding internet access:
-                 * https://stackoverflow.com/questions/1560788/how-to-check-internet-access-on-android-inetaddress-never-times-out
-                 */
+     * per Implementation Guide, regarding internet access:
+     * https://stackoverflow.com/questions/1560788/how-to-check-internet-access-on-android-inetaddress-never-times-out
+     */
     private boolean isOnline() {
         ConnectivityManager cm =
                 (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -111,46 +107,17 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
     }
 
     private void loadMovies(int filter) {
-        if(!isOnline()){
+        if (filter != Constants.MOVIES_FAVORITES && !isOnline()) {
             Toast.makeText(MovieListActivity.this, R.string.movie_err_inet, Toast.LENGTH_LONG).show();
             return;
         }
-        try {
-            ArrayList<Movie> mMovies = new LoadMovies(MovieListActivity.this, filter, API_KEY).execute().get();
-            if (mMovies != null && mMovies.size() > 0) {
-                mAdapter.setMovies(mMovies);
-            }
-        } catch (InterruptedException e) {
-            Log.d(MovieListActivity.class.getCanonicalName(), "Interrupted LoadMovies: " + e.getMessage());
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            Log.d(MovieListActivity.class.getCanonicalName(), "Error while executing LoadMovies: " + e.getMessage());
-            e.printStackTrace();
-        }
+        LoadMovies loadMovies = new LoadMovies(MovieListActivity.this, filter);
+        loadMovies.execute();
     }
 
-    /*
-     * Go through the locally stored favorite movies, provided by the content provider
-     */
-    private void loadFavoriteMovies() {
-        if(mCR == null){
-            Toast.makeText(MovieListActivity.this, R.string.movie_err_inet, Toast.LENGTH_LONG).show();
-            return;
-        }
-        ArrayList<Movie> favMovies = new ArrayList<>();
-        Cursor c = mCR.query(Constants.CONTENT_URI_FAVORITES, null, null, null, null);
-        if(c != null && c.moveToFirst()){
-            while (!c.isAfterLast()){
-                favMovies.add(new Movie(c.getInt(c.getColumnIndex(FavoriteMovie.COLUMN_ID)),
-                        c.getString(c.getColumnIndex(FavoriteMovie.COLUMN_TITLE)),
-                        c.getString(c.getColumnIndex(FavoriteMovie.COLUMN_POSTER)),
-                        c.getString(c.getColumnIndex(FavoriteMovie.COLUMN_BACKDROP)),
-                        c.getString(c.getColumnIndex(FavoriteMovie.COLUMN_SYNOPSIS)),
-                        c.getFloat(c.getColumnIndex(FavoriteMovie.COLUMN_RATING)),
-                        c.getString(c.getColumnIndex(FavoriteMovie.COLUMN_DATE))));
-            }
-            mAdapter.setMovies(favMovies);
-            c.close();
+    private void setMoviesForAdapter(ArrayList<Movie> movies){
+        if (movies != null && movies.size() > 0) {
+            mAdapter.setMovies(movies);
         }
     }
 
@@ -159,8 +126,8 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu_movielist, menu);
 
-        int id = 0;
-        switch (mSelectedFilter){
+        int id;
+        switch (mSelectedFilter) {
             case Constants.MOVIES_MOST_POPULAR:
                 id = R.id.menu_sort_by_most_popular;
                 break;
@@ -188,14 +155,15 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
                 loadMovies((mSelectedFilter = Constants.MOVIES_HIGHEST_RATED));
                 return true;
             case R.id.menu_sort_by_favorites:
-                loadFavoriteMovies();
+                loadMovies((mSelectedFilter = Constants.MOVIES_FAVORITES));
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
-    private void setProgressState(boolean active){
+    private void setProgressState(boolean active) {
+        Log.d("MLA", "setProgress " + active);
         mProgressBar.setVisibility(active ? View.VISIBLE : View.GONE);
     }
 
@@ -216,36 +184,29 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
     static class LoadMovies extends AsyncTask<Void, Void, ArrayList<Movie>> {
 
         private String mUrl;
-        private String apiKey;
         private WeakReference<MovieListActivity> activityReference;
-        private List<Integer> ids = null;
 
-        LoadMovies(MovieListActivity context, int rating, String apiKey){
-            this.apiKey = apiKey;
+        LoadMovies(MovieListActivity context, int rating) {
             this.activityReference = new WeakReference<>(context);
-            switch (rating){
+            switch (rating) {
                 case Constants.MOVIES_MOST_POPULAR:
                     mUrl = Constants.REQUEST_MOST_POPULAR;
                     break;
                 case Constants.MOVIES_HIGHEST_RATED:
                     mUrl = Constants.REQUEST_HIGHEST_RATED;
                     break;
+                case Constants.MOVIES_FAVORITES:
+                    return;
             }
-            mUrl = mUrl.concat(apiKey);
-        }
-
-        LoadMovies(MovieListActivity context, List<Integer> ids, String apiKey){
-            this.apiKey = apiKey;
-            this.activityReference = new WeakReference<>(context);
-            this.ids = ids;
+            mUrl = mUrl.concat(API_KEY);
         }
 
         /*
          * Activate\Deactivate the ProgressBar
          */
-        private void postState(boolean active){
+        private void postState(boolean active) {
             MovieListActivity activity = activityReference.get();
-            if (activity == null || activity.isFinishing()){
+            if (activity == null || activity.isFinishing()) {
                 return;
             }
             activity.setProgressState(active);
@@ -266,7 +227,7 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
             ArrayList<Movie> movies = null;
             InputStream in = null;
             try {
-                if(ids != null){
+                if (TextUtils.isEmpty(mUrl)) {
                     movies = loadFavoriteMovies();
                 } else {
                     URL url = new URL(mUrl);
@@ -279,7 +240,7 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
                         movies = JsonUtils.parseMoviesJson(scanner.next());
                     }
                 }
-                if(movies != null) {
+                if (movies != null && isOnline()) {
                     // Load the trailers & reviews
                     for (Movie m : movies) {
                         m.setTrailers(getTrailers(m.getId()));
@@ -293,7 +254,7 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
                 Log.d(LoadMovies.class.getCanonicalName(), "Error while opening connection: " + e.getMessage());
                 e.printStackTrace();
             } finally {
-                if(in != null) {
+                if (in != null) {
                     try {
                         in.close();
                     } catch (IOException e) {
@@ -305,35 +266,46 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
             return movies;
         }
 
-        private ArrayList<Movie> loadFavoriteMovies() throws IOException {
-            InputStream in = null;
-            ArrayList<Movie> movies = new ArrayList<>();
-            for(int id : ids){
-                @SuppressLint("DefaultLocale")
-                URL url = new URL(String.format(Constants.REQUEST_MOVIE, apiKey));
-                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                in = new BufferedInputStream(urlConnection.getInputStream());
+        private boolean isOnline(){
+            ConnectivityManager cm =
+                    (ConnectivityManager) activityReference.get().getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo netInfo = cm != null ? cm.getActiveNetworkInfo() : null;
+            return netInfo != null && netInfo.isConnectedOrConnecting();
+        }
 
-                Scanner scanner = new Scanner(in).useDelimiter("\\A");
-
-                if (scanner.hasNext()) {
-                    movies.add(JsonUtils.parseMovieJson(scanner.next()));
+        /*
+         * Go through the locally stored favorite movies, provided by the content provider
+         */
+        private ArrayList<Movie> loadFavoriteMovies() {
+            ArrayList<Movie> favMovies = new ArrayList<>();
+            Cursor c = activityReference.get().getContentResolver().query(Constants.CONTENT_URI_FAVORITES, null, null, null, null);
+            if (c != null) {
+                if (c.moveToFirst()) {
+                    do {
+                        favMovies.add(new Movie(c.getInt(c.getColumnIndex(FavoriteMovie.COLUMN_ID)),
+                                c.getString(c.getColumnIndex(FavoriteMovie.COLUMN_TITLE)),
+                                c.getString(c.getColumnIndex(FavoriteMovie.COLUMN_POSTER)),
+                                c.getString(c.getColumnIndex(FavoriteMovie.COLUMN_BACKDROP)),
+                                c.getString(c.getColumnIndex(FavoriteMovie.COLUMN_SYNOPSIS)),
+                                c.getFloat(c.getColumnIndex(FavoriteMovie.COLUMN_RATING)),
+                                c.getString(c.getColumnIndex(FavoriteMovie.COLUMN_DATE))));
+                    } while (c.moveToNext());
                 }
+                c.close();
             }
-
-            return movies;
+            return favMovies;
         }
 
         private ArrayList<Trailer> getTrailers(int id) throws IOException {
             ArrayList<Trailer> trailers = null;
-            InputStream in = null;
-            @SuppressLint("DefaultLocale") 
-            URL trailerUrl = new URL(String.format(Constants.REQUEST_TRAILERS, id, apiKey));
+            InputStream in;
+            @SuppressLint("DefaultLocale")
+            URL trailerUrl = new URL(String.format(Constants.REQUEST_TRAILERS, id, API_KEY));
             HttpURLConnection urlConnection = (HttpURLConnection) trailerUrl.openConnection();
 
             in = new BufferedInputStream(urlConnection.getInputStream());
             Scanner scanner = new Scanner(in).useDelimiter("\\A");
-            if(scanner.hasNext()) {
+            if (scanner.hasNext()) {
                 trailers = JsonUtils.parseTrailerJson(scanner.next());
             }
             return trailers;
@@ -341,13 +313,13 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
 
         private ArrayList<Review> getReviews(int id) throws IOException {
             ArrayList<Review> reviews = null;
-            InputStream in = null;
+            InputStream in;
             @SuppressLint("DefaultLocale")
-            URL reviewUrl = new URL(String.format(Constants.REQUEST_REVIEWS, id, apiKey));
+            URL reviewUrl = new URL(String.format(Constants.REQUEST_REVIEWS, id, API_KEY));
             HttpURLConnection urlConnection = (HttpURLConnection) reviewUrl.openConnection();
             in = new BufferedInputStream(urlConnection.getInputStream());
             Scanner scanner = new Scanner(in).useDelimiter("\\A");
-            if(scanner.hasNext()) {
+            if (scanner.hasNext()) {
                 reviews = JsonUtils.parseReviewJson(scanner.next());
             }
             return reviews;
@@ -356,6 +328,11 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
         @Override
         protected void onPostExecute(ArrayList<Movie> movies) {
             postState(false);
+            MovieListActivity activity = activityReference.get();
+            if (activity == null || activity.isFinishing()) {
+                return;
+            }
+            activity.setMoviesForAdapter(movies);
         }
     }
 }

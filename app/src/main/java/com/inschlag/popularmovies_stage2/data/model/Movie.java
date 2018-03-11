@@ -2,10 +2,7 @@ package com.inschlag.popularmovies_stage2.data.model;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
-
 import java.util.ArrayList;
-import java.util.List;
 
 public class Movie implements Parcelable {
 
