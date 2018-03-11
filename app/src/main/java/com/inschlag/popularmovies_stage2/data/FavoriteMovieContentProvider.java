@@ -7,6 +7,7 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
 import com.inschlag.popularmovies_stage2.data.FavoriteMoviesContract.FavoriteMovie;
@@ -27,8 +28,7 @@ public class FavoriteMovieContentProvider extends ContentProvider {
                 Constants.CONTENT_FAVORITES_ID);
     }
 
-    public FavoriteMovieContentProvider() {
-    }
+    public FavoriteMovieContentProvider() {}
 
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
@@ -58,7 +58,7 @@ public class FavoriteMovieContentProvider extends ContentProvider {
     }
 
     @Override
-    public String getType(Uri uri) {
+    public String getType(@NonNull Uri uri) {
         switch (sUriMatcher.match(uri)){
             case Constants.CONTENT_FAVORITES:
                 return "vnd.android.cursor.dir/vnd." + Constants.CONTENT_AUTHORITY + "."
@@ -72,7 +72,7 @@ public class FavoriteMovieContentProvider extends ContentProvider {
     }
 
     @Override
-    public Uri insert(Uri uri, ContentValues values) {
+    public Uri insert(@NonNull Uri uri, ContentValues values) {
 
         long rowID = mDbHelper.getWritableDatabase()
                 .insert(FavoriteMovie.TABLE_NAME, "", values);
@@ -93,7 +93,7 @@ public class FavoriteMovieContentProvider extends ContentProvider {
     }
 
     @Override
-    public Cursor query(Uri uri, String[] projection, String selection,
+    public Cursor query(@NonNull Uri uri, String[] projection, String selection,
                         String[] selectionArgs, String sortOrder) {
         switch (sUriMatcher.match(uri)){
             case Constants.CONTENT_FAVORITES:
@@ -114,7 +114,7 @@ public class FavoriteMovieContentProvider extends ContentProvider {
     }
 
     @Override
-    public int update(Uri uri, ContentValues values, String selection,
+    public int update(@NonNull Uri uri, ContentValues values, String selection,
                       String[] selectionArgs) {
         throw new UnsupportedOperationException("Not implemented");
     }

@@ -1,10 +1,12 @@
 package com.inschlag.popularmovies_stage2;
 
 import android.annotation.SuppressLint;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -21,6 +23,8 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.inschlag.popularmovies_stage2.data.Constants;
+import com.inschlag.popularmovies_stage2.data.FavoriteMoviesContract;
+import com.inschlag.popularmovies_stage2.data.FavoriteMoviesContract.FavoriteMovie;
 import com.inschlag.popularmovies_stage2.data.model.Movie;
 import com.inschlag.popularmovies_stage2.data.model.Review;
 import com.inschlag.popularmovies_stage2.data.model.Trailer;
@@ -47,6 +51,7 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
     private MoviesAdapter mAdapter;
     private int mSelectedFilter = Constants.MOVIES_MOST_POPULAR;
     private SharedPreferences mSharedPrefs;
+    private ContentResolver mCR;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,24 +129,28 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
         }
     }
 
-    private void loadFavortieMovies() {
-        if(!isOnline()){
+    /*
+     * Go through the locally stored favorite movies, provided by the content provider
+     */
+    private void loadFavoriteMovies() {
+        if(mCR == null){
             Toast.makeText(MovieListActivity.this, R.string.movie_err_inet, Toast.LENGTH_LONG).show();
             return;
         }
-        // TODO access content provider and get ids
-
-        try {
-            ArrayList<Movie> mMovies = new LoadMovies(MovieListActivity.this, 1, API_KEY).execute().get();
-            if (mMovies != null && mMovies.size() > 0) {
-                mAdapter.setMovies(mMovies);
+        ArrayList<Movie> favMovies = new ArrayList<>();
+        Cursor c = mCR.query(Constants.CONTENT_URI_FAVORITES, null, null, null, null);
+        if(c != null && c.moveToFirst()){
+            while (!c.isAfterLast()){
+                favMovies.add(new Movie(c.getInt(c.getColumnIndex(FavoriteMovie.COLUMN_ID)),
+                        c.getString(c.getColumnIndex(FavoriteMovie.COLUMN_TITLE)),
+                        c.getString(c.getColumnIndex(FavoriteMovie.COLUMN_POSTER)),
+                        c.getString(c.getColumnIndex(FavoriteMovie.COLUMN_BACKDROP)),
+                        c.getString(c.getColumnIndex(FavoriteMovie.COLUMN_SYNOPSIS)),
+                        c.getFloat(c.getColumnIndex(FavoriteMovie.COLUMN_RATING)),
+                        c.getString(c.getColumnIndex(FavoriteMovie.COLUMN_DATE))));
             }
-        } catch (InterruptedException e) {
-            Log.d(MovieListActivity.class.getCanonicalName(), "Interrupted LoadMovies: " + e.getMessage());
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            Log.d(MovieListActivity.class.getCanonicalName(), "Error while executing LoadMovies: " + e.getMessage());
-            e.printStackTrace();
+            mAdapter.setMovies(favMovies);
+            c.close();
         }
     }
 
@@ -179,7 +188,7 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
                 loadMovies((mSelectedFilter = Constants.MOVIES_HIGHEST_RATED));
                 return true;
             case R.id.menu_sort_by_favorites:
-                //TODO
+                loadFavoriteMovies();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

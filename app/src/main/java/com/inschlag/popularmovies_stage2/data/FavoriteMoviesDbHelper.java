@@ -13,7 +13,12 @@ public class FavoriteMoviesDbHelper extends SQLiteOpenHelper {
 
     private static final String SQL_CREATE = "CREATE TABLE " + FavoriteMovie.TABLE_NAME + " (" +
             FavoriteMovie.COLUMN_ID + " INTEGER PRIMARY KEY," +
-            FavoriteMovie.COLUMN_TITLE + " TEXT)";
+            FavoriteMovie.COLUMN_TITLE + " TEXT," +
+            FavoriteMovie.COLUMN_POSTER + " TEXT," +
+            FavoriteMovie.COLUMN_BACKDROP + " TEXT," +
+            FavoriteMovie.COLUMN_SYNOPSIS + " TEXT," +
+            FavoriteMovie.COLUMN_RATING + " REAL," +
+            FavoriteMovie.COLUMN_DATE + " TEXT)";
 
     private static final String SQL_DROP = "DROP TABLE IF EXISTS" + FavoriteMovie.TABLE_NAME;
 

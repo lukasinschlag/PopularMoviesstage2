@@ -132,6 +132,11 @@ public class MovieDetailActivity extends AppCompatActivity implements TrailersAd
             ContentValues values = new ContentValues();
             values.put(FavoriteMoviesContract.FavoriteMovie.COLUMN_ID, mMovie.getId());
             values.put(FavoriteMoviesContract.FavoriteMovie.COLUMN_TITLE, mMovie.getTitle());
+            values.put(FavoriteMoviesContract.FavoriteMovie.COLUMN_POSTER, mMovie.getImg());
+            values.put(FavoriteMoviesContract.FavoriteMovie.COLUMN_BACKDROP, mMovie.getBackdrop());
+            values.put(FavoriteMoviesContract.FavoriteMovie.COLUMN_SYNOPSIS, mMovie.getPlot());
+            values.put(FavoriteMoviesContract.FavoriteMovie.COLUMN_RATING, mMovie.getRating());
+            values.put(FavoriteMoviesContract.FavoriteMovie.COLUMN_DATE, mMovie.getDate());
             mCR.insert(Constants.CONTENT_URI_FAVORITES, values);
         }
         return (isFav = !isFav);
