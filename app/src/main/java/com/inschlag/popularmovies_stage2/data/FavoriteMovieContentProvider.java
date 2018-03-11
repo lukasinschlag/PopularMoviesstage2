@@ -3,7 +3,6 @@ package com.inschlag.popularmovies_stage2.data;
 import android.content.ContentProvider;
 import android.content.ContentUris;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.SQLException;
@@ -16,8 +15,6 @@ import com.inschlag.popularmovies_stage2.data.FavoriteMoviesContract.FavoriteMov
 public class FavoriteMovieContentProvider extends ContentProvider {
 
     private FavoriteMoviesDbHelper mDbHelper;
-    private Context mContext;
-
     // Matcher to decide whether to load whole table or just one row
     private static final UriMatcher sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
@@ -30,9 +27,7 @@ public class FavoriteMovieContentProvider extends ContentProvider {
                 Constants.CONTENT_FAVORITES_ID);
     }
 
-    public FavoriteMovieContentProvider() {
-        mContext = getContext();
-    }
+    public FavoriteMovieContentProvider() {}
 
     @Override
     public int delete(@NonNull Uri uri, String selection, String[] selectionArgs) {
@@ -57,7 +52,7 @@ public class FavoriteMovieContentProvider extends ContentProvider {
         }
 
         // notify about change
-        mContext.getContentResolver().notifyChange(uri, null);
+        getContext().getContentResolver().notifyChange(Constants.CONTENT_URI_FAVORITES, null);
         return numDeletes;
     }
 
@@ -84,7 +79,7 @@ public class FavoriteMovieContentProvider extends ContentProvider {
         if(rowID > 0){
             Uri result = ContentUris.withAppendedId(Constants.CONTENT_URI_FAVORITES, rowID);
             // notify about change
-            mContext.getContentResolver().notifyChange(result, null);
+            getContext().getContentResolver().notifyChange(Constants.CONTENT_URI_FAVORITES, null);
             return result;
         }
         throw new SQLException("Failed to insert record " + uri);

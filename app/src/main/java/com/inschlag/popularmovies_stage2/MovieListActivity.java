@@ -5,11 +5,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -41,13 +45,15 @@ import java.util.Scanner;
 
 public class MovieListActivity extends AppCompatActivity implements MoviesAdapter.onMovieClickListener {
 
-    private static final String API_KEY = "TODO";
+    // https://stackoverflow.com/questions/33134031/is-there-a-safe-way-to-manage-api-keys/34021467#34021467
+    private static final String API_KEY = BuildConfig.THE_MOVIE_DB_API_TOKEN;
     private static final String MOVIE_FILTER = "movie_filter";
 
     private ProgressBar mProgressBar;
     private MoviesAdapter mAdapter;
     private int mSelectedFilter = Constants.MOVIES_MOST_POPULAR;
     private SharedPreferences mSharedPrefs;
+    private FavoriteMoviesObserver mObserver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +73,11 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
         mAdapter = new MoviesAdapter(this);
         recyclerView.setAdapter(mAdapter);
 
+        Looper looper = Looper.getMainLooper();
+        Handler handler = new Handler(looper);
+        mObserver = new FavoriteMoviesObserver(handler);
+        mObserver.deliverSelfNotifications();
+
         // store the movies to be reused on e.g. orientation change
         if (savedInstanceState != null && savedInstanceState.containsKey(Constants.MOVIE_KEY)) {
             mAdapter.setMovies((savedInstanceState.<Movie>getParcelableArrayList(Constants.MOVIE_KEY)));
@@ -76,8 +87,14 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        getContentResolver().registerContentObserver(Constants.CONTENT_URI_FAVORITES,
+                true, mObserver);
+    }
+
+    @Override
     protected void onSaveInstanceState(Bundle outState) {
-        Log.d(MovieListActivity.class.getCanonicalName(), "onSaveInstanceState");
         outState.putParcelableArrayList(Constants.MOVIE_KEY, mAdapter.getMovies());
         outState.putInt(MOVIE_FILTER, mSelectedFilter);
         super.onSaveInstanceState(outState);
@@ -93,6 +110,13 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
          * activity is paused and then resumed.
          */
         mSharedPrefs.edit().putInt(MOVIE_FILTER, mSelectedFilter).apply();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // unregister in onDestroy to allow for listing for changes while activity is only paused/stopped
+        getContentResolver().unregisterContentObserver(mObserver);
     }
 
     /*
@@ -163,7 +187,6 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
     }
 
     private void setProgressState(boolean active) {
-        Log.d("MLA", "setProgress " + active);
         mProgressBar.setVisibility(active ? View.VISIBLE : View.GONE);
     }
 
@@ -333,6 +356,35 @@ public class MovieListActivity extends AppCompatActivity implements MoviesAdapte
                 return;
             }
             activity.setMoviesForAdapter(movies);
+        }
+    }
+    
+    /*
+     * Used to monitor changes to the favorite movies stored
+     */
+    class FavoriteMoviesObserver extends ContentObserver {
+
+        /**
+         * Creates a content mObserver.
+         *
+         * @param handler The handler to run {@link #onChange} on, or null if none.
+         */
+        FavoriteMoviesObserver(Handler handler) {
+            super(handler);
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            super.onChange(selfChange);
+        }
+
+        @Override
+        public void onChange(boolean selfChange, Uri uri) {
+            super.onChange(selfChange, uri);
+            // check if currently the favorite movies are display, if reload them
+            if(mSelectedFilter == Constants.MOVIES_FAVORITES) {
+                loadMovies(mSelectedFilter);
+            }
         }
     }
 }
